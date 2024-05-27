@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #findDetails {float: left; width: 100%; background-color:rgb(177, 176, 176); color:brown; font-size: 32px;} /*title*/
+        html {float: left; width: 100%; background-color: rgb(177, 176, 176); color:black; font-size: 20px;} /*subtitle*/
+        #findDetails h1 {
+            margin-bottom: 5px; /*bottom margin h1 */
+        }
+        
+        #findDetails h2 {
+            margin-top: 1px; /*top margin h2 */
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 50%; /*table zoom*/
+        }
+
+        th, td {
+            padding: 10px; /*spacing around cell contents */
+            border: 1px solid black; /*cell separation borders */
+            text-align: left; /* Text alignment left */
+        }
+    </style>
+</head>
+<body>
+    <div id="findDetails">
+        <h1>E-LOCK</h1>
+        <h2 style="color: black; font-size: 18px;">ACCESS REGISTER</h2>
+        <h3 id="findName" type="text"></h3>
+        <h3 id="findAge" type="number"></h3>
+        <button id="deleteDataButton" class="action-button" style="padding: 5px 10px; font-size: 12px;">🗑️ Delete all data</button>
+        <button id="refreshButton" class="action-button" style="padding: 5px 10px; font-size: 13px;">🔄 Refresh page</button>
+        <button id="downloadButton" class="action-button" style="padding: 5px 10px; font-size: 13px;">⬇️ Download table</button>
+        <p></p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
+        
+        // web app's Firebase configuration
+        const firebaseConfig = {
+        apiKey: "AIzaSyCslWV7faq-5QZM2hLi1NQOea2B0nOL6so",
+        authDomain: "authenticator-283c6.firebaseapp.com",
+        databaseURL: "https://authenticator-283c6-default-rtdb.firebaseio.com",
+        projectId: "authenticator-283c6",
+        storageBucket: "authenticator-283c6.appspot.com",
+        messagingSenderId: "26242897351",
+        appId: "1:26242897351:web:63c3df2475c28ae1f8b5e2",
+        measurementId: "G-2W1EXZKKT9"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        
+        // database import
+        import {getDatabase, set, get, update, ref, child, remove}
+        from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js"
+        
+
+        const db = getDatabase();
+        var deleteDataButtonBtn = document.querySelector("#deleteDataButton");
+        var refreshButtonBtn = document.querySelector("#refreshButton");
+        var downloadButton = document.querySelector("#downloadButton");
+        
+        function FindData() {
+        const dbref = ref(db); // main database reference
+
+        get(dbref) // Get data from main database reference and put them into table
+        .then((snapshot)=>{
+        const table = document.createElement('table');
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th><span>📅 Date</span></th>
+                    <th><span>⏰ Time</span></th>
+                    <th><span>🏠 House</span></th>
+                    <th><span>👤 User</span></th>
+                    <th><span>🔋 Battery voltage</span></th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+        snapshot.forEach((childSnapshot) => {
+            const userData = childSnapshot.val();
+            // Add each table row with corresponding data
+            table.innerHTML += `
+                <tr>
+                    <td>${userData.date}</td>
+                    <td>${userData.time}</td>
+                    <td>${userData.house}</td>
+                    <td>${userData.user}</td>
+                    <td>${userData.voltage}</td>
+                </tr>
+            `;
+        });
+        table.innerHTML += `</tbody>`;
+        document.body.appendChild(table); // table added to the body of the HTML document
+    })
+    .catch((error)=>{
+        alert(error);
+    });
+}
+
+
+// Function to delete all data from the database
+function deleteAllData() {
+    const dbref = ref(db);
+    if (confirm("Are you sure you want to delete all data?")){
+    remove(dbref).then(() => {
+        alert("All data deleted successfully.");
+        location.reload(); // Reload the page
+    }).catch((error) => {
+        alert(error);
+    });
+}
+}
+
+
+// Function to reload the page
+function refreshPage() {
+    location.reload(); // Reload the page
+}
+
+// Function to download the table as HTML file
+function downloadTable() {
+    const table = document.querySelector('table').outerHTML;
+    const style = `
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 50%; /*table zoom*/
+            }
+
+            th, td {
+                padding: 10px; /*spacing around cell contents */
+                border: 1px solid black; /*cell separation borders */
+                text-align: left; /* Text alignment left */
+            }
+        </style>
+    `;
+    const html = `
+        <html>
+            <head>
+                <title>Table</title>
+                ${style}
+            </head>
+            <body>
+                <h1>E-LOCK accesses backup</h1>
+                ${table}
+            </body>
+        </html>
+    `;
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.download = 'accesses_backup.html';
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    alert("A file called 'accesses_backup.html' containing the access backup was created and downloaded");
+}
+
+
+deleteDataButtonBtn.addEventListener('click', deleteAllData);
+refreshButtonBtn.addEventListener('click', refreshPage);
+downloadButton.addEventListener('click', downloadTable);
+window.addEventListener('load', FindData);
+
+</script>
+</body>
+</html>
